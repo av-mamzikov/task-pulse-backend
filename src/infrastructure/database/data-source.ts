@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import {DataSource} from 'typeorm';
 import {environment} from '../config/environment';
 import {TaskEntity} from './entities/TaskEntity';
+import {CommentEntity} from './entities/CommentEntity';
 import {logger} from '../logger/logger';
 
 export const AppDataSource = new DataSource({
@@ -13,7 +14,7 @@ export const AppDataSource = new DataSource({
   database: environment.database.database,
   synchronize: false, // Never use synchronize in production
   logging: environment.nodeEnv === 'development',
-  entities: [TaskEntity],
+  entities: [TaskEntity, CommentEntity],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   subscribers: [],
   migrationsTableName: 'migrations',

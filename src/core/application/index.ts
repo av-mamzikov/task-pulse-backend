@@ -1,19 +1,22 @@
+// Common patterns
+export * from './common';
+
 // Interfaces
 export { ITaskRepository, TaskFilterOptions } from './interfaces/ITaskRepository';
-export { ICommentRepository } from './interfaces/ICommentRepository';
 
 // DTOs
-export { CreateTaskDto } from './dtos/CreateTaskDto';
-export { UpdateTaskDto } from './dtos/UpdateTaskDto';
-export { UpdateTaskStatusDto } from './dtos/UpdateTaskStatusDto';
-export { TaskResponseDto } from './dtos/TaskResponseDto';
-export { FilterTasksDto } from './dtos/FilterTasksDto';
-export { CreateCommentDto } from './dtos/CreateCommentDto';
-export { CommentResponseDto } from './dtos/CommentResponseDto';
+export * from './dtos/CreateTaskDto';
+export * from './dtos/UpdateTaskDto';
+export * from './dtos/UpdateTaskStatusDto';
+export * from './dtos/TaskResponseDto';
+export * from './dtos/CreateCommentDto';
+export * from './dtos/CommentResponseDto';
 
 // Validators
-export { CreateTaskValidator } from './validators/CreateTaskValidator';
-export { UpdateTaskValidator } from './validators/UpdateTaskValidator';
-export { UpdateTaskStatusValidator } from './validators/UpdateTaskStatusValidator';
-export { CreateCommentValidator } from './validators/CreateCommentValidator';
-export { FilterTasksValidator } from './validators/FilterTasksValidator';
+export * from './validators/CreateTaskValidator';
+export * from './validators/UpdateTaskValidator';
+export * from './validators/UpdateTaskStatusValidator';
+export * from './validators/CreateCommentValidator';
+
+// Use Cases
+// export * from './use-cases'; // Uncomment when use cases are implemented

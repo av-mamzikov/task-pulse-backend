@@ -1,14 +1,24 @@
 import {ITaskRepository} from '@core/application/interfaces/ITaskRepository';
+import {IEventDispatcher} from '@core/domain';
 import {TaskRepository} from '../repositories/TaskRepository';
+import {EventDispatcher} from '../events/EventDispatcher';
+import {
+  CommentAddedHandler,
+  TaskCompletedHandler,
+  TaskCreatedHandler,
+  TaskPriorityChangedHandler,
+  TaskStatusChangedHandler,
+} from '../events/handlers';
+import {logger} from '../logger';
 
 /**
  * Type for services that can be registered in the container
  */
-type ServiceInstance = ITaskRepository; // Add more types here as needed: | IOtherService | ...
+type ServiceInstance = ITaskRepository | IEventDispatcher; // Add more types here as needed
 
 /**
  * Simple Dependency Injection container
- * Following Clean Architecture principles - Infrastructure provides implementations
+ * Following Clean Architecture and DDD principles - Infrastructure provides implementations
  */
 export class Container {
   private static instance: Container;
@@ -57,11 +67,43 @@ export class Container {
   }
 
   /**
+   * Get EventDispatcher instance
+   */
+  public getEventDispatcher(): IEventDispatcher {
+    return this.resolve<IEventDispatcher>('IEventDispatcher');
+  }
+
+  /**
    * Register all services/repositories
    */
   private registerServices(): void {
-    // Register repositories
-    this.services.set('ITaskRepository', new TaskRepository());
+    // Register Event Dispatcher
+    const eventDispatcher = new EventDispatcher();
+    this.services.set('IEventDispatcher', eventDispatcher);
+
+    // Register event handlers
+    this.registerEventHandlers(eventDispatcher);
+
+    // Register repositories (with dependencies)
+    this.services.set('ITaskRepository', new TaskRepository(eventDispatcher));
+
+    logger.info('DI Container initialized with all services and event handlers');
+  }
+
+  /**
+   * Register all event handlers with the event dispatcher
+   */
+  private registerEventHandlers(eventDispatcher: EventDispatcher): void {
+    // Task event handlers
+    eventDispatcher.register('TaskCreated', new TaskCreatedHandler());
+    eventDispatcher.register('TaskStatusChanged', new TaskStatusChangedHandler());
+    eventDispatcher.register('TaskCompleted', new TaskCompletedHandler());
+    eventDispatcher.register('TaskPriorityChanged', new TaskPriorityChangedHandler());
+
+    // Comment event handlers
+    eventDispatcher.register('CommentAdded', new CommentAddedHandler());
+
+    logger.debug('Registered all event handlers');
   }
 }
 
