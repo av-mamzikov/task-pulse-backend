@@ -194,7 +194,7 @@ export class TaskRepository implements ITaskRepository {
 
       await queryRunner.commitTransaction();
 
-      return result.affected !== null && result.affected > 0;
+      return (result.affected ?? 0) > 0;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       logger.error('Error deleting task:', error);

@@ -1,12 +1,6 @@
 import {CompositeSpecification} from '../base/Specification';
 import {TaskStatus} from '../../enums/TaskStatus';
-
-/**
- * Interface representing the minimum Task properties needed for this specification
- */
-export interface ITaskForSpecification {
-  status: TaskStatus;
-}
+import {ITaskForSpecification} from './ITaskForSpecification';
 
 /**
  * Specification for active (not completed) tasks

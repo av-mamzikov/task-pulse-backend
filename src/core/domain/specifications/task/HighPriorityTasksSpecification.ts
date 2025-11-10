@@ -1,12 +1,6 @@
 import {CompositeSpecification} from '../base/Specification';
 import {Priority} from '../../enums/Priority';
-
-/**
- * Interface representing the minimum Task properties needed for this specification
- */
-export interface ITaskForSpecification {
-  priority: Priority;
-}
+import {ITaskForSpecification} from './ITaskForSpecification';
 
 /**
  * Specification for high priority tasks

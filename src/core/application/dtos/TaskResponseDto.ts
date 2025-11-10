@@ -14,11 +14,11 @@ export class TaskResponseDto {
 
   constructor(task: Task) {
     this.id = task.id;
-    this.title = task.getTitleValue();
-    this.description = task.getDescriptionValue();
+    this.title = task.title;
+    this.description = task.description;
     this.priority = task.priority;
     this.status = task.status;
-    this.dueDate = task.getDueDateValue();
+    this.dueDate = task.dueDate;
     this.createdAt = task.createdAt;
     this.updatedAt = task.updatedAt;
     this.isOverdue = task.isOverdue();

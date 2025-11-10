@@ -408,20 +408,6 @@ describe('TaskRepository', () => {
 });
 ```
 
-## Migration from Legacy Code
-
-The implementation maintains backward compatibility:
-
-```typescript
-// Old entities still exported as legacy
-import {TaskLegacy, CommentLegacy} from '@core/domain';
-
-// New aggregates are the default
-import {Task, Comment} from '@core/domain';
-```
-
-Gradually migrate code to use new aggregates and remove legacy exports when ready.
-
 ## Future Enhancements
 
 1. **Event Sourcing** - Store all events for complete audit trail

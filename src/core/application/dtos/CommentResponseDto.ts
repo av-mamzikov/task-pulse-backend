@@ -10,7 +10,7 @@ export class CommentResponseDto {
   constructor(comment: Comment) {
     this.id = comment.id;
     this.taskId = comment.taskId;
-    this.text = comment.getTextValue();
+    this.text = comment.text;
     this.textLength = comment.getTextLength();
     this.createdAt = comment.createdAt;
   }

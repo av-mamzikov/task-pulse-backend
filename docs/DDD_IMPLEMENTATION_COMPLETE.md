@@ -303,32 +303,20 @@ describe('Task Aggregate', () => {
 
 ---
 
-## Migration Path
+## Next Steps
 
-### Phase 1: Backward Compatibility (Current)
-
-- ✅ Old entities exported as `TaskLegacy`, `CommentLegacy`
-- ✅ New aggregates exported as `Task`, `Comment`
-- ✅ Both can coexist during migration
-
-### Phase 2: Use Case Migration (Next)
+### Use Case Migration
 
 - [ ] Update use cases to use new aggregates
 - [ ] Use Result pattern for error handling
 - [ ] Leverage domain services
 - [ ] Handle domain events
 
-### Phase 3: Controller Migration
+### Controller Migration
 
 - [ ] Update controllers to handle Result pattern
 - [ ] Remove direct entity manipulation
 - [ ] Use aggregate methods
-
-### Phase 4: Cleanup
-
-- [ ] Remove legacy exports
-- [ ] Remove old entity classes
-- [ ] Update all references
 
 ---
 

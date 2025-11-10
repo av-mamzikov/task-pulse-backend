@@ -1,13 +1,6 @@
 import {CompositeSpecification} from '../base/Specification';
 import {TaskStatus} from '../../enums/TaskStatus';
-
-/**
- * Interface representing the minimum Task properties needed for specifications
- */
-export interface ITaskForSpecification {
-  dueDate: Date;
-  status: TaskStatus;
-}
+import {ITaskForSpecification} from './ITaskForSpecification';
 
 /**
  * Specification for tasks that are overdue

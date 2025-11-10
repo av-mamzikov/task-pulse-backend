@@ -1,9 +1,5 @@
-// Aggregates (new DDD structure)
+// Aggregates
 export * from './aggregates';
-
-// Legacy Entities (kept for backward compatibility during migration)
-export {Task as TaskLegacy} from './entities/Task';
-export {Comment as CommentLegacy} from './entities/Comment';
 
 // Enums
 export { TaskStatus } from './enums/TaskStatus';
