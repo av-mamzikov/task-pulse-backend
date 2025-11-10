@@ -36,17 +36,9 @@ max_line_length = off
 indent_style = space
 indent_size = 2
 
-# Configuration files
-[*.config.{js,ts}]
-indent_style = space
-indent_size = 2
-
-# Environment files
-[.env*]
-insert_final_newline = true
 
 # Shell scripts
 [*.sh]
 indent_style = space
 indent_size = 2
-end_of_line = lf
+# end_of_line already inherited from [*]

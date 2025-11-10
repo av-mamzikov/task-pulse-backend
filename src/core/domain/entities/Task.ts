@@ -1,8 +1,4 @@
-import { TaskStatus } from '../enums/TaskStatus';
-import { Priority } from '../enums/Priority';
-import { TaskTitle } from '../value-objects/TaskTitle';
-import { TaskDescription } from '../value-objects/TaskDescription';
-import { DueDate } from '../value-objects/DueDate';
+import {DueDate, Priority, TaskDescription, TaskStatus, TaskTitle} from '@core/domain';
 
 export class Task {
   id: string;

@@ -1,4 +1,4 @@
-import { CommentText } from '../value-objects/CommentText';
+import {CommentText} from '@core/domain';
 
 export class Comment {
   id: string;
