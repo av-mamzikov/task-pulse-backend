@@ -153,18 +153,36 @@
 - **AR-1.2:** Backend и frontend развертываются независимо
 - **AR-1.3:** Взаимодействие через REST API
 
-### AR-2: Backend архитектура (Clean Architecture по Ardalis.CleanArchitecture.Template)
+### AR-2: Backend архитектура (Domain-Driven Design + Clean Architecture)
 
 #### Структура слоев:
 
 **Core Layer (Domain + Application)**
-- **Domain:** Сущности (Task, Comment), Value Objects, Enums (TaskStatus, Priority)
-- **Application:** Интерфейсы (ITaskRepository), DTOs, Use Cases, Валидаторы
+
+- **Domain (Доменный слой):**
+    - **Aggregates:** Task (Aggregate Root), Comment (Entity в составе Task)
+    - **Domain Events:** TaskCreated, TaskStatusChanged, TaskCompleted, CommentAdded и др.
+    - **Specifications:** OverdueTasksSpecification, HighPriorityTasksSpecification
+    - **Domain Services:** TaskPriorityService, TaskValidationService
+    - **Value Objects:** TaskTitle, TaskDescription, DueDate, CommentText
+    - **Enums:** TaskStatus, Priority
+    - **Exceptions:** DomainException, InvalidStatusTransitionException
+
+- **Application (Прикладной слой):**
+    - **Interfaces:** ITaskRepository, IEventDispatcher
+    - **DTOs:** CreateTaskDto, UpdateTaskDto, TaskResponseDto
+    - **Use Cases:** CreateTask, UpdateTaskStatus, AddComment (будущее)
+    - **Validators:** CreateTaskValidator, UpdateTaskValidator
+    - **Result Pattern:** Type-safe error handling
 
 **Infrastructure Layer**
-- Реализация репозиториев (TaskRepository)
-- Конфигурация БД (TypeORM/Prisma)
-- Внешние сервисы (если потребуются)
+
+- Реализация репозиториев (TaskRepository с поддержкой Aggregates)
+- Event Dispatcher и Event Handlers
+- Конфигурация БД (TypeORM)
+- Mappers (Domain ↔ Persistence)
+- Dependency Injection Container
+- Логирование
 
 **Web/API Layer**
 - Express маршруты и контроллеры
@@ -172,12 +190,21 @@
 - Swagger конфигурация
 - DTOs для API запросов/ответов
 
-**Принципы:**
-- **AR-2.1:** Dependency Inversion: зависимости направлены к Core
-- **AR-2.2:** Core не зависит от Infrastructure и Web
-- **AR-2.3:** Infrastructure и Web зависят от Core
-- **AR-2.4:** Использование интерфейсов для абстракции зависимостей
-- **AR-2.5:** Dependency Injection для управления зависимостями
+**Принципы DDD:**
+
+- **AR-2.1:** Aggregate Pattern: Task управляет своими Comment
+- **AR-2.2:** Domain Events: все изменения состояния генерируют события
+- **AR-2.3:** Ubiquitous Language: код отражает бизнес-логику
+- **AR-2.4:** Bounded Context: четкие границы домена
+- **AR-2.5:** Repository Pattern: работа с агрегатами как с единым целым
+
+**Принципы Clean Architecture:**
+
+- **AR-2.6:** Dependency Inversion: зависимости направлены к Core
+- **AR-2.7:** Core не зависит от Infrastructure и Web
+- **AR-2.8:** Infrastructure и Web зависят от Core
+- **AR-2.9:** Использование интерфейсов для абстракции зависимостей
+- **AR-2.10:** Dependency Injection для управления зависимостями
 
 ### AR-3: Frontend архитектура
 
@@ -205,29 +232,46 @@
 
 ### AR-5: Структура проектов
 
-**Backend структура:**
+**Backend структура (DDD):**
 ```
 task-pulse-backend/
 ├── src/
 │   ├── core/
 │   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   ├── enums/
-│   │   │   └── value-objects/
+│   │   │   ├── aggregates/          # Агрегаты (Task, Comment)
+│   │   │   │   └── task/
+│   │   │   ├── events/              # Domain Events
+│   │   │   │   ├── base/
+│   │   │   │   ├── task/
+│   │   │   │   └── comment/
+│   │   │   ├── specifications/      # Спецификации
+│   │   │   │   ├── base/
+│   │   │   │   └── task/
+│   │   │   ├── services/            # Domain Services
+│   │   │   ├── exceptions/          # Domain Exceptions
+│   │   │   ├── enums/               # Enums
+│   │   │   └── value-objects/       # Value Objects
 │   │   └── application/
-│   │       ├── interfaces/
-│   │       ├── dtos/
-│   │       ├── use-cases/
-│   │       └── validators/
+│   │       ├── common/              # Result Pattern
+│   │       ├── interfaces/          # ITaskRepository, IEventDispatcher
+│   │       ├── dtos/                # DTOs
+│   │       ├── use-cases/           # Use Cases (будущее)
+│   │       └── validators/          # Validators
 │   ├── infrastructure/
 │   │   ├── database/
-│   │   ├── repositories/
-│   │   └── config/
+│   │   │   ├── entities/            # TypeORM Entities
+│   │   │   ├── mappers/             # Domain ↔ Persistence
+│   │   │   └── migrations/
+│   │   ├── repositories/            # TaskRepository
+│   │   ├── events/                  # EventDispatcher, Handlers
+│   │   ├── config/                  # DI Container
+│   │   └── logger/
 │   ├── web/
 │   │   ├── controllers/
 │   │   ├── middleware/
 │   │   ├── routes/
 │   │   └── swagger/
+│   ├── docs/                        # Документация
 │   └── index.ts
 ├── Dockerfile
 └── package.json
@@ -256,20 +300,42 @@ task-pulse-frontend/
 3. Создать Docker Compose для локальной разработки (PostgreSQL)
 4. Настроить переменные окружения
 
-### Этап 2: Backend - Core Layer
-1. Определить сущности домена:
-   - Task (id, title, description, priority, dueDate, status, createdAt, updatedAt)
-   - Comment (id, taskId, text, createdAt) - опционально
-2. Создать Enums: TaskStatus, Priority
-3. Определить интерфейсы репозиториев (ITaskRepository, ICommentRepository)
-4. Создать DTOs для use cases
-5. Реализовать валидаторы для DTOs
+### Этап 2: Backend - Core Layer (Domain)
+
+1. **Определить агрегаты домена:**
+    - Task (Aggregate Root) - управляет своими комментариями
+    - Comment (Entity) - часть агрегата Task
+2. **Создать Value Objects:** TaskTitle, TaskDescription, DueDate, CommentText
+3. **Создать Enums:** TaskStatus, Priority
+4. **Определить Domain Events:**
+    - TaskCreated, TaskStatusChanged, TaskCompleted
+    - CommentAdded, CommentDeleted
+5. **Создать Specifications:** OverdueTasksSpecification, HighPriorityTasksSpecification
+6. **Создать Domain Services:** TaskPriorityService, TaskValidationService
+7. **Создать Domain Exceptions:** InvalidStatusTransitionException, InvalidDueDateException
+8. **Определить интерфейсы:** ITaskRepository, IEventDispatcher
+9. **Создать DTOs** для application layer
+10. **Реализовать валидаторы** для DTOs
+11. **Реализовать Result Pattern** для type-safe error handling
 
 ### Этап 3: Backend - Infrastructure Layer
-1. Настроить подключение к PostgreSQL (TypeORM/Prisma)
-2. Создать миграции для таблиц tasks и comments
-3. Реализовать репозитории (TaskRepository, CommentRepository)
-4. Настроить Dependency Injection
+
+1. Настроить подключение к PostgreSQL (TypeORM)
+2. Создать TypeORM entities для tasks и comments
+3. Создать миграции для таблиц
+4. **Реализовать Mappers** (Domain ↔ Persistence)
+5. **Реализовать TaskRepository** с поддержкой:
+    - **Lazy Loading:** `findById()` - БЕЗ комментариев (по умолчанию)
+    - **Eager Loading:** `findByIdWithComments()` - С комментариями (явно)
+    - `update()` - обновляет только Task (комментарии не трогает)
+    - `findAll()` - загружает только Task'и (без комментариев)
+    - Поддержки Specifications
+    - Диспетчеризации Domain Events после commit
+6. **Реализовать EventDispatcher** и Event Handlers
+7. Настроить **Dependency Injection Container**
+8. Настроить логирование
+
+**Важно:** Repository должен по умолчанию работать БЕЗ загрузки комментариев для оптимизации производительности!
 
 ### Этап 4: Backend - Use Cases
 1. CreateTask use case
@@ -353,7 +419,132 @@ task-pulse-frontend/
 - `POST /api/tasks/:taskId/comments` - Добавить комментарий
 - `GET /api/tasks/:taskId/comments` - Получить комментарии задачи
 
-## 8. Модель данных (концептуальная)
+## 8. Бизнес-правила и инварианты (DDD)
+
+### Aggregate Boundaries и Lazy Loading
+
+#### Aggregate Root: Task
+
+- **Task** является Aggregate Root
+- **Comment** является Entity внутри агрегата Task
+- Все изменения Comment должны проходить через методы Task
+
+#### Важно: Lazy Loading комментариев
+
+**Комментарии НЕ загружаются автоматически с задачей!**
+
+Это критично для производительности:
+
+1. **Операции с Task (БЕЗ загрузки комментариев):**
+    - Создание задачи
+    - Изменение статуса задачи
+    - Изменение приоритета
+    - Изменение названия/описания
+    - Изменение срока выполнения
+    - Удаление задачи
+    - Получение списка задач
+    - Фильтрация задач
+
+2. **Операции с комментариями (С загрузкой комментариев):**
+    - Просмотр списка комментариев к задаче
+    - Добавление комментария
+    - Редактирование комментария
+    - Удаление комментария
+
+#### Методы Repository:
+
+- `findById(id)` - загружает только Task (без комментариев)
+- `findByIdWithComments(id)` - загружает Task + все комментарии
+- `update(task)` - обновляет только Task (комментарии не трогает)
+- `findAll()` - загружает только Task'и (без комментариев)
+
+### Business Rules
+
+#### Правила изменения статуса:
+
+1. **New → InProgress** ✅ Разрешено
+2. **InProgress → Done** ✅ Разрешено
+3. **Done → InProgress** ✅ Разрешено (переоткрытие)
+4. **New → Done** ❌ Запрещено (должно пройти через InProgress)
+
+#### Правила валидации:
+
+- Название задачи: 1-200 символов, обязательное
+- Описание: до 2000 символов, опциональное
+- Срок выполнения: не может быть в прошлом
+- Комментарий: не может быть пустым
+
+#### Domain Events:
+
+Все изменения состояния генерируют события:
+
+- Создание задачи → `TaskCreated`
+- Изменение статуса → `TaskStatusChanged`
+- Завершение задачи → `TaskCompleted`
+- Изменение приоритета → `TaskPriorityChanged`
+- Добавление комментария → `CommentAdded`
+- Удаление комментария → `CommentDeleted`
+
+### Specifications (бизнес-правила для запросов):
+
+- **OverdueTasksSpecification:** Задачи с просроченным сроком
+- **HighPriorityTasksSpecification:** Задачи с высоким приоритетом
+- **CompletableTaskSpecification:** Задачи, которые можно завершить
+- **ActiveTasksSpecification:** Активные (незавершенные) задачи
+
+### Примеры сценариев работы с агрегатом
+
+#### Сценарий 1: Изменение статуса задачи (БЕЗ комментариев)
+
+```typescript
+// 1. Загружаем только Task (без комментариев)
+const task = await taskRepository.findById(taskId);
+
+// 2. Изменяем статус через бизнес-метод
+task.changeStatus(TaskStatus.InProgress);
+
+// 3. Сохраняем (комментарии не трогаются)
+await taskRepository.update(task);
+// → Обновляется только таблица tasks
+// → Комментарии не загружаются и не обновляются
+```
+
+#### Сценарий 2: Добавление комментария (С комментариями)
+
+```typescript
+// 1. Загружаем Task С комментариями
+const task = await taskRepository.findByIdWithComments(taskId);
+
+// 2. Добавляем комментарий через бизнес-метод
+const comment = task.addComment(new CommentText('Новый комментарий'));
+
+// 3. Сохраняем (обновляются и Task и Comments)
+await taskRepository.update(task);
+// → Обновляется таблица tasks
+// → Вставляется новый комментарий в таблицу comments
+```
+
+#### Сценарий 3: Просмотр комментариев (только чтение)
+
+```typescript
+// Загружаем Task с комментариями для отображения
+const task = await taskRepository.findByIdWithComments(taskId);
+
+// Получаем комментарии для отображения
+const comments = task.comments; // ReadonlyArray<Comment>
+```
+
+#### Сценарий 4: Получение списка задач (БЕЗ комментариев)
+
+```typescript
+// Загружаем все задачи БЕЗ комментариев
+const tasks = await taskRepository.findAll({status: TaskStatus.InProgress});
+// → Выполняется только SELECT из таблицы tasks
+// → Комментарии НЕ загружаются
+// → Быстро и эффективно для списков
+```
+
+## 9. Модель данных (концептуальная)
 
 ### Task
 - id: UUID (PK)
@@ -371,20 +562,35 @@ task-pulse-frontend/
 - text: string (NOT NULL)
 - createdAt: timestamp (NOT NULL)
 
-## 9. Критерии приемки MVP
+## 10. Критерии приемки MVP
 
+### Функциональные критерии:
 1. ✅ Пользователь может создать задачу со всеми обязательными полями
 2. ✅ Пользователь видит список всех задач
-3. ✅ Пользователь может изменить статус задачи
+3. ✅ Пользователь может изменить статус задачи (с валидацией переходов)
 4. ✅ Пользователь может удалить задачу
 5. ✅ Пользователь может фильтровать задачи по статусу и приоритету
 6. ✅ Данные сохраняются в PostgreSQL
 7. ✅ Данные сохраняются после перезапуска приложения
-8. ✅ Backend и frontend запускаются в Docker контейнерах
-9. ✅ API документирован через Swagger
-10. ✅ Frontend использует сгенерированный API клиент из OpenAPI спецификации
 
-## 10. Ограничения и допущения
+### Технические критерии:
+
+8. ✅ Backend реализован с использованием DDD паттернов:
+    - Aggregates (Task, Comment)
+    - Domain Events
+    - Specifications
+    - Domain Services
+    - Value Objects
+9. ✅ Все бизнес-правила инкапсулированы в домене
+10. ✅ Domain Events диспетчеризуются после изменений
+11. ✅ Repository работает с агрегатами как с единым целым
+12. ✅ Backend и frontend запускаются в Docker контейнерах
+13. ✅ API документирован через Swagger
+14. ✅ Frontend использует сгенерированный API клиент из OpenAPI спецификации
+15. ✅ TypeScript компиляция без ошибок
+16. ✅ ESLint проверка без ошибок
+
+## 11. Ограничения и допущения
 
 ### Ограничения:
 - Нет аутентификации и авторизации в MVP
